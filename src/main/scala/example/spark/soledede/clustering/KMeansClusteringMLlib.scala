@@ -7,7 +7,7 @@ import org.apache.spark.{SparkContext, SparkConf}
 /**
   * Created by soledede on 16/3/29.
   */
-object KMeansClustering {
+object KMeansClusteringMLlib {
 
   def main(args: Array[String]) {
     if (args.length < 5) {
@@ -59,6 +59,33 @@ object KMeansClustering {
       println(s"The data $line.toString  belongs to cluster $predictedClusterIndex")
     })
     println("Spark MLlib K-means clustering test finished.")
+  }
+
+  //filter the first channel
+  private def isColumnNameChannelLine(line: String): Boolean = {
+    if (line != null && line.contains("Channel")) true
+    else false
+  }
+
+}
+
+
+object KMeansClusteringMLlibK {
+  def main(args: Array[String]) {
+
+    val conf = new SparkConf().setAppName("Spark MLlib Example:K-Means Clustering")
+    val sc = new SparkContext(conf)
+
+    val tainingData = sc.textFile(args(0))
+    val parsedTrainingData = tainingData.filter(!isColumnNameChannelLine(_)).map(line => {
+      Vectors.dense(line.split("\t").map(_.trim).filter(!"".equals(_)).map(_.toDouble))
+    }).cache()
+    val k: Array[Int] = Array(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+    k.foreach(c => {
+      val model: KMeansModel = KMeans.train(parsedTrainingData, c, 25, 1)
+      val distance = model.computeCost(parsedTrainingData)
+      println(s"sum of squared distances of points to their nearest center when k=$c -> $distance")
+    })
   }
 
   //filter the first channel
